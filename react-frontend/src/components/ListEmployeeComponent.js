@@ -7,11 +7,12 @@ export default function ListEmployeeComponent(props) {
     return (
         <div>
             <h2 className="text-center">Employees List</h2>
-            <div className="row">
-                <button className="btn btn-primary" onClick={()=>{
-                props.navigate("/add-employee")
+
+                <button className="btn btn-primary" onClick={() => {
+                    props.navigate("/add-employee")
                 }}>Add Employee</button>
-            </div>
+
+            <br></br>
             <div className="row">
                 <table className="table table-striped table-bordered">
 
@@ -27,15 +28,18 @@ export default function ListEmployeeComponent(props) {
                     <tbody>
                         {
 
-                            props.employees.map((employee) => {
-                                
+                            props.employeesList.map((employee) => {
+
                                 return (
                                     <Employee employee={employee} key={employee.id}
-                                        navigate={props.navigate} />
+                                        navigate={props.navigate}
+                                        deleteEmployee={props.deleteEmployee}
+                                        gettingUpdataEmployeeData={props.gettingUpdataEmployeeData} />
                                 )
                             })
                         }
                     </tbody>
+                    
                 </table>
             </div>
         </div>

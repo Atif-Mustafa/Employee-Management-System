@@ -1,83 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import ListEmployeeComponent from './components/ListEmployeeComponent';
 import EmployeeService from './services/EmployeeService';
 import CreateEmployeeComponent from './components/CreateEmployeeComponent';
-import { Route, Routes } from 'react-router-dom'
-import { useNavigate } from "react-router-dom";
+import { Route, Routes, useParams, useNavigate } from 'react-router-dom'
+
 import UpdateEmployeeComponent from './components/UpdateEmployeeComponent';
+import HeaderComponent from './components/HeaderComponent';
+import FooterComponent from './components/FooterComponent';
 
 function App() {
 
-  const [employees, setEmployees] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
 
-  const componentDidMount=()=> {
+  const componentDidMount = () => {
     EmployeeService.getEmployees().then((res) => {
-      setEmployees(res.data);
-      console.log(employees);
-    }).catch(()=>{
+      setEmployeesList(res.data);
+    }).catch(() => {
       console.log('error');
-  });
+    });
   }
- componentDidMount();
- 
+  componentDidMount();
+
   const navigate = useNavigate();
-  const addEmployeeFormData = {
+  const employeeFormDataStructure = {
     firstName: '',
     lastName: '',
     emailId: ''
   }
-  const [employeeData, setEmployeeData] = useState(addEmployeeFormData);
+  const [employeeFormData, setEmployeeFormData] = useState(employeeFormDataStructure);
+  const { id } = useParams();
+  useEffect(() => {
+    console.log(employeeFormData);
+  }, [employeeFormData]);
+
 
   const changeFirstNameHandler = (event) => {
-    setEmployeeData({ firstName: event.target.value })
+    console.log(employeeFormData);
+    setEmployeeFormData({
+      ...employeeFormData,
+      firstName: event.target.value
+    })
   }
   const changeLastNameHandler = (event) => {
-    setEmployeeData({ lastName: event.target.value })
+    setEmployeeFormData({ ...employeeFormData, lastName: event.target.value })
+
   }
   const changeEmailIdHandler = (event) => {
-    setEmployeeData({ emailId: event.target.value })
+    setEmployeeFormData({ ...employeeFormData, emailId: event.target.value })
   }
 
   const saveEmployee = (event) => {
     event.preventDefault();
-    let saveEmployeeData = {
-      firstName: employeeData.firstName,
-      lastName: employeeData.lastName,
-      emailId: employeeData.emailId
+    let saveEmployeeFormData = {
+      firstName: employeeFormData.firstName,
+      lastName: employeeFormData.lastName,
+      emailId: employeeFormData.emailId
     }
-    console.log('employee => ' + JSON.stringify(saveEmployeeData));
-    EmployeeService.createEmployee(saveEmployeeData).then(res => {
-      setEmployeeData(res.data);
+    // console.log('employee => ' + JSON.stringify(saveEmployeeFormData));
+    EmployeeService.createEmployee(saveEmployeeFormData).then(res => {
+
       navigate('/employees')
-      
-    }).catch(()=>{
-      console.log('error in creating employees');
+      setEmployeeFormData(employeeFormDataStructure)
+    })
+      .catch(() => {
+        console.log('error in creating employees');
+      })
+  }
+  const gettingUpdataEmployeeData = (employeeId) => {
+    EmployeeService.getEmployeeById(employeeId).then((res) => {
+      let employee = res.data;
+      setEmployeeFormData({ firstName: employee.firstName, lastName: employee.lastName, emailId: employee.emailId })
     })
   }
+  const updateEmployeeData = (employeeId) => {
 
-  {/*const updateEmployee = (event) => {
-    event.preventDefault();
+
     let updateEmployeeData = {
-      firstName: employeeData.firstName,
-      lastName: employeeData.lastName,
-      emailId: employeeData.emailId
+      firstName: employeeFormData.firstName,
+      lastName: employeeFormData.lastName,
+      emailId: employeeFormData.emailId
     }
-    EmployeeService.getEmployeeById(props.match.params.id).then((res)=>{
-          
-    })
-  }*/}
 
+
+    EmployeeService.updateEmployee(updateEmployeeData, id)
+      .then(() => { navigate('/employees') })
+      .catch(() => { console.log('error') })
+  }
+
+
+  const deleteEmployee = (employeeId) => {
+    EmployeeService.deleteEmployee(employeeId)
+      .then(() => {
+        // Filter out the deleted employee from the employeesList state
+        const updatedList = employeesList.filter((employee) => employee.id !== employeeId);
+        setEmployeesList(updatedList);
+      })
+      .catch(() => {
+        console.log('error in deleting employee');
+      });
+  };
 
 
   return (
     <div>
+      <HeaderComponent />
       <div className='container'>
         <Routes>
-          <Route path="/" element={<ListEmployeeComponent employees={employees} navigate={navigate} />}></Route>
-          <Route path="/employees" element={<ListEmployeeComponent employees={employees} navigate={navigate} />}></Route>
+          <Route path="/" element={<ListEmployeeComponent employeesList={employeesList} navigate={navigate} deleteEmployee={deleteEmployee} />}></Route>
+          <Route path="/employees" element={<ListEmployeeComponent employeesList={employeesList} navigate={navigate} deleteEmployee={deleteEmployee} gettingUpdataEmployeeData={gettingUpdataEmployeeData} />}></Route>
           <Route path="/add-employee" element={<CreateEmployeeComponent
-            employeeData={employeeData}
+            employeeFormData={employeeFormData}
+
             changeFirstNameHandler={changeFirstNameHandler}
             changeLastNameHandler={changeLastNameHandler}
             changeEmailIdHandler={changeEmailIdHandler}
@@ -85,14 +119,12 @@ function App() {
             navigate={navigate}
           />}></Route>
 
-      {/*}    <Route path="/update-employee/:id" element={<UpdateEmployeeComponent updateEmployee={updateEmployee}
-            employeeData={employeeData}
-            changeFirstNameHandler={changeFirstNameHandler}
-            changeLastNameHandler={changeLastNameHandler}
-            changeEmailIdHandler={changeEmailIdHandler}
-          />}></Route>*/}
+          <Route path="/update-employee/:id" element={<UpdateEmployeeComponent updateEmployeeData={updateEmployeeData}
+            navigate={navigate}
+          />}></Route>
         </Routes>
       </div>
+      <FooterComponent />
 
     </div>
   );
